@@ -16,7 +16,7 @@ See [LICENSE](LICENSE)
 For full instructions see [INSTALL.md](INSTALL.md) or [INSTALL-cmake.md](INSTALL-cmake.md).
 
 You might also be interested in LAMMPS-MLIP interface distributed here:
-[https://gitlab.com/ivannovikov/lammps-mlip-v3-interface](https://gitlab.com/ivannovikov/lammps-mlip-v3-interface)
+[https://gitlab.com/ivannovikov/interface-lammps-mlip-3/](https://gitlab.com/ivannovikov/interface-lammps-mlip-3/)
 
 
 ## Getting Started
