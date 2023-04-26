@@ -801,7 +801,8 @@ bool Commands(const string& command, vector<string>& args, map<string, string>& 
         "converts the neighborhood in \"in.cfg\" to the sperical configuration in \"out.cfg\"\n"
         "  Options include:\n"
         "  --cutoff=<double>: set cutoff radius of sphere with neighbors. Default=5 angstrom\n"
-        "  --no_save_additional_atoms: indicate do not save atoms beyond the sphere.\n"
+//        "  --no_save_additional_atoms: indicate do not save atoms beyond the sphere.\n"
+        "  --threshold_save=<double>: extrapolative environments with the extrapolation grade higher then this value will be saved. Default: 3.0\n"
     ) {
 
         if (args.size() < 2) {
@@ -809,6 +810,144 @@ bool Commands(const string& command, vector<string>& args, map<string, string>& 
             return 1;
         }
 
+        double tshd = 3.0;
+        if (opts["threshold_save"] != "" and stod(opts["threshold_save"]) > 1.0)
+            tshd = stod(opts["threshold_save"]);
+            
+        double cutoff = stod(opts["cutoff"]);            
+
+        ifstream ifs(args[0]);
+        ofstream ofs(args[1]);
+        ofs.close();
+
+        Configuration cfg;
+
+        int cntr = 0;
+        while (cfg.Load(ifs))
+        {
+            std::set<int> nbhs;
+        
+            for (int i=0; i<cfg.size(); i++) 
+                if (cfg.nbh_grades(i) > tshd) 
+                    nbhs.insert(i);
+
+            cfg.CorrectSupercell();
+
+            cfg.InitNbhs(cutoff);
+
+            for (int i : nbhs)
+            {
+                Configuration nbh;
+                nbh.features["cfg#"] = to_string(cntr);
+                nbh.features["nbh#"] = to_string(i);
+                nbh.features["extrapolation_grade"] = to_string(cfg.nbh_grades(i));
+                nbh.resize(cfg.nbhs[i].count + 1);
+                nbh.pos(0) = Vector3(0, 0, 0);
+                nbh.type(0) = cfg.type(i);
+                
+                for (int j=0; j<cfg.nbhs[i].count; j++)
+                {
+                    nbh.pos(j+1) = cfg.nbhs[i].vecs[j];
+                    nbh.type(j+1) = cfg.nbhs[i].types[j];
+                } 
+                    
+                nbh.AppendToFile(args[1]);
+            }
+
+            cntr++;
+/*
+            if (cfg.lattice.det() != 0.0)
+            {
+
+                Vector3 v1(cfg.lattice[0][0], cfg.lattice[0][1], cfg.lattice[0][2]);
+                Vector3 v2(cfg.lattice[1][0], cfg.lattice[1][1], cfg.lattice[1][2]);
+                Vector3 v3(cfg.lattice[2][0], cfg.lattice[2][1], cfg.lattice[2][2]);
+            
+                Vector3 n3 = Vector3::VectProd(v1, v2) / Vector3::VectProd(v1, v2).Norm();
+                Vector3 n2 = Vector3::VectProd(v1, v3) / Vector3::VectProd(v1, v3).Norm();
+                Vector3 n1 = Vector3::VectProd(v3, v2) / Vector3::VectProd(v3, v2).Norm();
+                
+                int times1 = ceil((n1 * (n1 * v1)).Norm() / cutoff);
+                int times2 = ceil((n2 * (n2 * v2)).Norm() / cutoff);
+                int times3 = ceil((n3 * (n3 * v3)).Norm() / cutoff);
+            
+                int sz = cfg.size();
+                for (int i=1; i<=times1; i++)
+                {
+                    int oldsz = cfg.size();
+                    cfg.resize(oldsz + sz);
+                    for (int j=0; j<sz; j++)
+                    {
+                        cfg.pos(oldsz + j) = cfg.pos(j) + v1*i;
+                        cfg.type(oldsz + j) = cfg.type(j);
+                    }
+                    oldsz = cfg.size();
+                    cfg.resize(oldsz + sz);
+                    for (int j=0; j<sz; j++)
+                    {
+                        cfg.pos(oldsz + j) = cfg.pos(j) - v1*i;
+                        cfg.type(oldsz + j) = cfg.type(j);
+                    }
+                }
+                for (int i=1; i<=times2; i++)
+                {
+                    int oldsz = cfg.size();
+                    cfg.resize(oldsz + sz);
+                    for (int j=0; j<sz; j++)
+                    {
+                        cfg.pos(oldsz + j) = cfg.pos(j) + v2*i;
+                        cfg.type(oldsz + j) = cfg.type(j);
+                    }
+                    oldsz = cfg.size();
+                    cfg.resize(oldsz + sz);
+                    for (int j=0; j<sz; j++)
+                    {
+                        cfg.pos(oldsz + j) = cfg.pos(j) - v2*i;
+                        cfg.type(oldsz + j) = cfg.type(j);
+                    }
+                }
+                for (int i=1; i<=times3; i++)
+                {
+                    int oldsz = cfg.size();
+                    cfg.resize(oldsz + sz);
+                    for (int j=0; j<sz; j++)
+                    {
+                        cfg.pos(oldsz + j) = cfg.pos(j) + v3*i;
+                        cfg.type(oldsz + j) = cfg.type(j);
+                    }
+                    oldsz = cfg.size();
+                    cfg.resize(oldsz + sz);
+                    for (int j=0; j<sz; j++)
+                    {
+                        cfg.pos(oldsz + j) = cfg.pos(j) - v3*i;
+                        cfg.type(oldsz + j) = cfg.type(j);
+                    }
+                }
+
+            }
+            
+            for (int i : nbhs)
+            {
+                Vector3 pos(cfg.pos(i));
+                Configuration nbh;
+                nbh.resize(cfg.size() + 1);
+                nbh.pos(nbh.size()-1) = cfg.pos(i);
+                nbh.type(nbh.size()-1) = cfg.type(i);
+                
+                for (int j=0; j<cfg.size(); j++)
+                    if (distance(cfg.pos(i), cfg.pos(j)) <= cutoff)
+                    {
+                        nbh.resize(cfg.size() + 1);
+                        nbh.pos(nbh.size()-1) = cfg.pos(j);
+                        nbh.type(nbh.size()-1) = cfg.type(j);
+                    } 
+                    
+                nbh.AppendToFile(args[1]);
+            }
+*/
+        }
+        
+/*
         double rcut  = 9;
         if (!opts["cutoff"].empty())
             rcut = stod(opts["cutoff"]);
@@ -872,7 +1011,7 @@ bool Commands(const string& command, vector<string>& args, map<string, string>& 
             cfg.Save(ofs);
 
         }
-
+*/
     } END_COMMAND;
 
     BEGIN_COMMAND("calculate_grade",
