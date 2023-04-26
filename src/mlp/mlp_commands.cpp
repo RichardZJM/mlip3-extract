@@ -801,8 +801,8 @@ bool Commands(const string& command, vector<string>& args, map<string, string>& 
         "converts the neighborhood in \"in.cfg\" to the sperical configuration in \"out.cfg\"\n"
         "  Options include:\n"
         "  --cutoff=<double>: set cutoff radius of sphere with neighbors. Default=5 angstrom\n"
-//        "  --no_save_additional_atoms: indicate do not save atoms beyond the sphere.\n"
-        "  --threshold_save=<double>: extrapolative environments with the extrapolation grade higher then this value will be saved. Default: 3.0\n"
+        "  --no_save_additional_atoms: indicate do not save atoms beyond the sphere.\n"
+//        "  --threshold_save=<double>: extrapolative environments with the extrapolation grade higher then this value will be saved. Default: 3.0\n"
     ) {
 
         if (args.size() < 2) {
@@ -810,7 +810,7 @@ bool Commands(const string& command, vector<string>& args, map<string, string>& 
             return 1;
         }
 
-        double tshd = 3.0;
+/*        double tshd = 3.0;
         if (opts["threshold_save"] != "" and stod(opts["threshold_save"]) > 1.0)
             tshd = stod(opts["threshold_save"]);
             
@@ -855,7 +855,7 @@ bool Commands(const string& command, vector<string>& args, map<string, string>& 
             }
 
             cntr++;
-/*
+
             if (cfg.lattice.det() != 0.0)
             {
 
@@ -944,10 +944,10 @@ bool Commands(const string& command, vector<string>& args, map<string, string>& 
                     
                 nbh.AppendToFile(args[1]);
             }
-*/
+
         }
+*/
         
-/*
         double rcut  = 9;
         if (!opts["cutoff"].empty())
             rcut = stod(opts["cutoff"]);
@@ -1011,7 +1011,7 @@ bool Commands(const string& command, vector<string>& args, map<string, string>& 
             cfg.Save(ofs);
 
         }
-*/
+
     } END_COMMAND;
 
     BEGIN_COMMAND("calculate_grade",
