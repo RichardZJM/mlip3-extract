@@ -798,23 +798,22 @@ bool Commands(const string& command, vector<string>& args, map<string, string>& 
     BEGIN_COMMAND("cut_extrapolative_nbh",
         "converts neighborhood to sperical configuration (non-periodic boundary conditions)",
         "mlp cut_extrapolative_nbh in.cfg out.cfg [options]:\n"
-        "converts the neighborhood in \"in.cfg\" to the sperical configuration in \"out.cfg\"\n"
+        "for each configuration in \"in.cfg\" finds the neighborhood with the maximal extrapolation grade,\n"
+        "  converts it to the non-periodic configuration cut from in.cfg, and saves it in \"out.cfg\"\n"
         "  Options include:\n"
-        "  --cutoff=<double>: set cutoff radius of sphere with neighbors. Default=5 angstrom\n"
-        "  --no_save_additional_atoms: indicate do not save atoms beyond the sphere.\n"
+        "  --cutoff=<double>: set cutoff radius of sphere to cut from in.cfg. Default=7.0 Angstrom\n"
+//        "  --no_save_additional_atoms: indicate do not save atoms beyond the sphere.\n"
 //        "  --threshold_save=<double>: extrapolative environments with the extrapolation grade higher then this value will be saved. Default: 3.0\n"
     ) {
 
-        if (args.size() < 2) {
-            cout << "mlp nbh_to_spherical_cfg: 2 arguments are required\n";
+        if (args.size() != 2) {
+            cout << "mlp cut_extrapolative_nbh: 2 arguments required\n";
             return 1;
         }
 
-/*        double tshd = 3.0;
-        if (opts["threshold_save"] != "" and stod(opts["threshold_save"]) > 1.0)
-            tshd = stod(opts["threshold_save"]);
-            
-        double cutoff = stod(opts["cutoff"]);            
+        double cutoff = 7.0;
+            if (opts["cutoff"] != "") 
+                cutoff = stod(opts["cutoff"]);
 
         ifstream ifs(args[0]);
         ofstream ofs(args[1]);
@@ -825,37 +824,38 @@ bool Commands(const string& command, vector<string>& args, map<string, string>& 
         int cntr = 0;
         while (cfg.Load(ifs))
         {
-            std::set<int> nbhs;
-        
-            for (int i=0; i<cfg.size(); i++) 
-                if (cfg.nbh_grades(i) > tshd) 
-                    nbhs.insert(i);
-
-            cfg.CorrectSupercell();
+            int i = -1;
+            double max_grade = 0.0;
+            for (int j=0; j<cfg.size(); j++) 
+                if (cfg.nbh_grades(j) > max_grade) 
+                {
+                    max_grade = cfg.nbh_grades(j);
+                    i = j;
+                }
+            if (max_grade < 1.1)
+                continue;
 
             cfg.InitNbhs(cutoff);
 
-            for (int i : nbhs)
-            {
-                Configuration nbh;
-                nbh.features["cfg#"] = to_string(cntr);
-                nbh.features["nbh#"] = to_string(i);
-                nbh.features["extrapolation_grade"] = to_string(cfg.nbh_grades(i));
-                nbh.resize(cfg.nbhs[i].count + 1);
-                nbh.pos(0) = Vector3(0, 0, 0);
-                nbh.type(0) = cfg.type(i);
+            Configuration nbh;
+            nbh.features["cfg#"] = to_string(cntr);
+            nbh.features["nbh#"] = to_string(i);
+            nbh.features["extrapolation_grade"] = to_string(cfg.nbh_grades(i));
+            nbh.resize(cfg.nbhs[i].count + 1);
+            nbh.pos(0) = Vector3(0, 0, 0);
+            nbh.type(0) = cfg.type(i);
                 
-                for (int j=0; j<cfg.nbhs[i].count; j++)
-                {
-                    nbh.pos(j+1) = cfg.nbhs[i].vecs[j];
-                    nbh.type(j+1) = cfg.nbhs[i].types[j];
-                } 
+            for (int j=0; j<cfg.nbhs[i].count; j++)
+            {
+                nbh.pos(j+1) = cfg.nbhs[i].vecs[j];
+                nbh.type(j+1) = cfg.nbhs[i].types[j];
+            } 
                     
-                nbh.AppendToFile(args[1]);
-            }
+            nbh.AppendToFile(args[1]);
 
+            cout << "from cfg#" << cntr+1 << " cut nbh#" << i << " with grade=" << max_grade << " (atoms count is " << cfg.nbhs[i].count << ')' << endl;
             cntr++;
-
+/*
             if (cfg.lattice.det() != 0.0)
             {
 
@@ -944,10 +944,10 @@ bool Commands(const string& command, vector<string>& args, map<string, string>& 
                     
                 nbh.AppendToFile(args[1]);
             }
-
-        }
 */
+        }
         
+/*
         double rcut  = 9;
         if (!opts["cutoff"].empty())
             rcut = stod(opts["cutoff"]);
@@ -1011,7 +1011,7 @@ bool Commands(const string& command, vector<string>& args, map<string, string>& 
             cfg.Save(ofs);
 
         }
-
+*/
     } END_COMMAND;
 
     BEGIN_COMMAND("calculate_grade",

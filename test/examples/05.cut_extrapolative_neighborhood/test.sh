@@ -6,4 +6,4 @@ TMP_DIR=./out
 mkdir -p $TMP_DIR
 
 # Body:
-$MLP_EXE cut_extrapolative_nbh selected.cfg $TMP_DIR/spherical.cfg --cutoff=8 --no_save_additional_atoms
+$MLP_EXE cut_extrapolative_nbh selected.cfg $TMP_DIR/spherical.cfg --cutoff=8 
