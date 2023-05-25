@@ -72,93 +72,20 @@ You should then configure MLIP with
 ./configure --blas=openblas --blas-root=<OpenBLAS path>
 ```
 
-## BUILDING MLIP WITH A LAMMPS EXECUTABLE
-1. Download the LAMMPS software:
-```bash 
-git clone https://github.com/lammps/lammps.git
-```
-(Or your other favorite way of downloading)
+## BUILDING MLIP LIBRARY FOR INTERFACES WITH OTHER CODES (E.G. LAMMPS)
 
-2. Configure MLIP to be (also) used within LAMMPS
 ```bash
-./configure --lammps=<LAMMPS path>
+make libinterface
 ```
-`<LAMMPS path>` is where you have downloaded LAMMPS (it should have the src/
-folder inside `<LAMMPS path>`.)
-
-3. You can attempt to automatically make LAMMPS
-```bash
-make lammps
-```
-This will create two executables, `lmp_serial` and `lmp_mpi` in the `bin/` folder
-of MLIP (if you are lucky, if not - follow the manual installation guide below)
-
-4. Build the MLIP-for-LAMMPS library (if auto build fails):
-```bash
-make liblammps 
-```
-This library is needed to build LAMMPS with MLIP
-Then copy it to the LAMMPS sources:
-```bash
-mkdir -p <LAMMPS path>/lib/mlip
-cp lib/lib_mlip_lammps.a <LAMMPS path>/lib/mlip
-```
-
-5. Copying MLIP-LAMMPS interface to LAMMPS (if auto build fails):
-```bash
-mkdir -p <LAMMPS path>/src/USER-MLIP
-cp make/LAMMPS/Install.sh <LAMMPS path>/src/USER-MLIP
-cp make/LAMMPS/README <LAMMPS path>/src/USER-MLIP
-```
-
-You will also need to create  `<LAMMPS path>/lib/mlip/Makefile.lammps`
-with the following content:
-```
-mlip_SYSINC =
-mlip_SYSLIB = -lgfortran -lpthread 
-mlip_SYSPATH = 
-```
-
-Make sure that you are in `LAMMPS` directory and type:
-```bash
-make -C ./src yes-user-mlip
-make -C ./src serial
-make -C ./src mpi
-```
-    
-If you get no error and the LAMMPS executables `lmp_serial` and `lmp_mpi` are
-produced in the `<LAMMPS path>/src` directory. Copy them over to `<MLIP path>/bin/`
-
-
-## BUILDING MLIP WITH A LAMMPS SHARED LIBRARY
-
-1. Configure mlp as in the previous section but then run
-```bash
-make lammps-shlib
-```
-This will create `lib/liblammps_serial.so` and `lib/liblammps_mpi.so`
-
+This creates `lib/lib_mlip_interface.a` which should be used when building
+other packages embedding MLIP.
+The interface with MLIP is avaiable
+[here](https://gitlab.com/ivannovikov/interface-lammps-mlip-3)
+under a GNU Public License.
 
 ## TESTING THE MLIP BUILD
 The build can be tested by running:
 ```bash 
 make test
 ```
-This launches a number of tests, including test of LAMMPS if it was instlaled
-(i.e., if `bin/lmp_serial` and `bin/lmp_mpi` exist).
-
-## PYTHON LIBRARY (mlippy)
-
-To build mlippy, from the root directory execute:
-```bash
-make mlippy
-```
-You will need to install "Cython","MPI4py","ASE" packages to build mlippy.
-
-This will create a file 'lib/mlippy.so'
-
-To make the mlippy library importable, put the 'mlippy.so' file into the $PYTHONPATH directory
-or near your running *.py file
-
-
-
+This launches a number of tests.
