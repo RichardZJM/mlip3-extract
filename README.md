@@ -13,7 +13,7 @@ See [LICENSE](LICENSE)
 * make
 
 ## Compile
-For full instructions see [INSTALL.md](INSTALL.md) or [INSTALL-cmake.md](INSTALL-cmake.md).
+For full instructions see [INSTALL.md](INSTALL.md).
 
 You might also be interested in LAMMPS-MLIP interface distributed here:
 [https://gitlab.com/ivannovikov/interface-lammps-mlip-3/](https://gitlab.com/ivannovikov/interface-lammps-mlip-3/)
@@ -21,7 +21,7 @@ You might also be interested in LAMMPS-MLIP interface distributed here:
 
 ## Getting Started
 
-Have a look at `doc/manual/` first.
+Have a look at `doc/paper.pdf` first.
 
 Check the usage examples at `test/examples/`
 
