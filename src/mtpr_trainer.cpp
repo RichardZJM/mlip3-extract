@@ -410,7 +410,7 @@ void MTPR_trainer::AddSpecies(std::vector<Configuration>& training_set)
 
 void MTPR_trainer::NonLinOptimize(std::vector<Configuration>& training_set, int max_iter) //with Shapeev bfgs
 {
-    AddSpecies(training_set);   //add new species to MTPR potential if they are present in the training set
+    //AddSpecies(training_set);   //add new species to MTPR potential if they are present in the training set
 
 #ifdef MLIP_MPI
     MPI_Barrier(mpi.comm);
@@ -574,12 +574,12 @@ void MTPR_trainer::NonLinOptimize(std::vector<Configuration>& training_set, int 
                 //logstrm1 << num_step << " " << bfgs_f << endl;
                 num_step++;
 
-                if (num_step % 100 == 0)
+                if (num_step % 50 == 0 && num_step > 100)
                 {
                     if ((linf - bfgs_f) / bfgs_f < bfgs_conv_tol)   //checking the relative decrease of the loss function in 100 iterations
                     {
                         converge = true;
-                        logstrm1 << "BFGS ended due to small decr. in 100 iterations" << endl;
+                        logstrm1 << "BFGS ended due to small decr. in 50 iterations" << endl;
                         MLP_LOG("fit", logstrm1.str()); logstrm1.str("");
                     }
                     linf = bfgs_f;
@@ -780,8 +780,8 @@ void MTPR_trainer::Train(std::vector<Configuration>& training_set)
         if (mpi.rank == 0)
 #endif 
         {
-            logstrm1 << "BFGS iterations count set to " << maxits << std::endl; MLP_LOG("fit", logstrm1.str()); logstrm1.str("");
-            logstrm1 << "BFGS convergence tolerance set to " << bfgs_conv_tol << std::endl; MLP_LOG("fit", logstrm1.str()); logstrm1.str("");
+            logstrm1 << "Iteration limit is " << maxits << std::endl; MLP_LOG("fit", logstrm1.str()); logstrm1.str("");
+            logstrm1 << "Convergence tolerance is " << bfgs_conv_tol << std::endl; MLP_LOG("fit", logstrm1.str()); logstrm1.str("");
             if ((wgt_eqtn_energy != 0) || (wgt_eqtn_forces != 0) || (wgt_eqtn_stress != 0)) {
                 logstrm1 << "Energy weight: " << wgt_eqtn_energy << std::endl; MLP_LOG("fit", logstrm1.str()); logstrm1.str("");
                 logstrm1 << "Force weight: " << wgt_eqtn_forces << std::endl; MLP_LOG("fit", logstrm1.str()); logstrm1.str("");
