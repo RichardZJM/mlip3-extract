@@ -46,6 +46,11 @@ You can force to use the embedded BLAS with the `--blas=embedded` option:
 ```bash
 ./configure --blas=embedded
 ```
+You can also force to use the GNU compiler with the `--compiler=gnu` option:
+```bash
+./configure --compiler=gnu --blas=embedded
+```
+
 By default, the parallel version of the MLIP is compiled. Compilation of serial
 version can be done by specifying the `--no-mpi` option to configure':
 ```bash
