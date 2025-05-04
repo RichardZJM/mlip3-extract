@@ -10,32 +10,22 @@
 using namespace std;
 
 
-#define NEIGHMASK 0x3FFFFFFF
-#define DEFAULTCUTOFF 5.0
-
-Wrapper *MLIP_wrp = nullptr;
-AnyLocalMLIP* p_mlip; // AnyLocalMLIP is needed for the neighborhood mode
-double cutoff;
-std::ofstream logfilestream;
-bool reorder_atoms = true;
-void(*LAMMPS_CallbackComm)(double*) = nullptr;
-
-
 // Initilizes MLIP
 #ifndef MLIP_MPI
 #   define MPI_Comm int
 #endif
 
 
-void MLIP_init(std::map<std::string, std::string> setup,  // settings filename
-               double& rcut,                // MLIP's cutoff radius returned to LAMMPS (may be used for parallelization or acceleration)
-               void (*CallbackComm)(double*),
-               MPI_Comm& world)
+void* MLIP_init(std::map<std::string, std::string> setup,  // settings filename
+                double& rcut,                // MLIP's cutoff radius returned to LAMMPS (may be used for parallelization or acceleration)
+                MPI_Comm& world,
+                void (*CallbackComm)(void*, double*))
 {
-    if (MLIP_wrp != nullptr)
-        ERROR("Only one instance of MLIP can be created activated at the same time");
+    Wrapper* MLIP_wrp = nullptr;
 
     mpi.InitComm(world);
+
+    mpi.LammpsCallbackComm = CallbackComm;
 
     SetStreamForOutput(&std::cout);
 
@@ -43,27 +33,26 @@ void MLIP_init(std::map<std::string, std::string> setup,  // settings filename
 
     try
     {
-        if (MLIP_wrp != nullptr)
-            delete MLIP_wrp;
-
         MLIP_wrp = new Wrapper(settings);
+        AnyLocalMLIP* p_mlip = (AnyLocalMLIP*)MLIP_wrp->p_mlip;
+        if (p_mlip == nullptr)
+            ERROR("Incoorect MLIP initialization");
+
+        rcut = p_mlip->CutOff();
+
+        return static_cast<void*>(MLIP_wrp); 
     }
     catch (MlipException& exception)
     {
         Message(exception.What());
+        std::cout.flush();
         exit(9991);
     }
-
-    p_mlip = (AnyLocalMLIP*)MLIP_wrp->p_mlip;
-    if (p_mlip != nullptr)
-        cutoff = rcut = p_mlip->CutOff();
-    else
-        cutoff = rcut = DEFAULTCUTOFF;
-
-    LAMMPS_CallbackComm = CallbackComm;
 }
 
-void MLIP_CalcCfgForLammps( int inum,              // input parameter: number of neighborhoods (number of local atoms)
+void MLIP_CalcCfgForLammps( void* p_void_mlip,      // a pointer to mlip_wrapper stored in lammps
+                            void* p_void_pair,      // a pointer to lammps pair object calling this function (required for callback from mlip)
+                            int inum,               // input parameter: number of neighborhoods (number of local atoms)
                             int nghost,             // number of ghost atoms
                             int* ilist,                          // input parameter: 
                             int* numneigh,                      // input parameter: number of neighbors in each neighborhood (inum integer numbers)
@@ -80,12 +69,19 @@ void MLIP_CalcCfgForLammps( int inum,              // input parameter: number of
 {
     try
     {
+        Wrapper* MLIP_wrp = static_cast<Wrapper*>(p_void_mlip);
+
+        if (MLIP_wrp == nullptr)
+            ERROR("A pointer to the MLIP Wrapper is nullptr");
+
+        const size_t NEIGHMASK = 0x3FFFFFFF;
         Configuration cfg;
-        static int cfg_counter = 0;
+        cfg.p_void_pair = p_void_pair;
 
-        cfg.features["ind"] = to_string(++cfg_counter);
+//        static int cfg_counter = 0;
+//        cfg.features["ind"] = to_string(++cfg_counter);
 
-        cfg.CommGhostData = LAMMPS_CallbackComm;
+        double cutoff = ((AnyLocalMLIP*)MLIP_wrp->p_mlip)->CutOff();
 
 #   ifdef MLIP_DEBUG
         if (mpi.size == 1 && cfg.is_mpi_splited == true)
@@ -111,7 +107,7 @@ void MLIP_CalcCfgForLammps( int inum,              // input parameter: number of
         cfg.nbhs.resize(inum);              // nbhs array is created for all atoms, whereas nbh structures are initilized only for non-ghost atoms and remain empty for ghost neighborhoods
         cfg.is_mpi_splited = splited;
 
-		memcpy(&cfg.pos(0, 0), x[0], 3 * (inum + nghost) * sizeof(double));
+        memcpy(&cfg.pos(0, 0), x[0], 3 * (inum + nghost) * sizeof(double));
         memcpy(&cfg.type(0), types, (inum + nghost) * sizeof(int));
         for (int i=0; i<inum+nghost; i++)
             cfg.type(i) -= 1;
@@ -205,22 +201,20 @@ void MLIP_CalcCfgForLammps( int inum,              // input parameter: number of
 
 
 // destroys MLIP object
-void MLIP_finalize()
+void MLIP_finalize(void* p_void_mlip)
 {
+    Wrapper* MLIP_wrp = static_cast<Wrapper*>(p_void_mlip);
+
     try
     {
-        delete MLIP_wrp;
+        if (MLIP_wrp != nullptr)
+            delete MLIP_wrp;
+        p_void_mlip = nullptr;
     }
     catch (MlipException& excp)
     {
         Message(excp.What());
         exit(9994);
     }
-    MLIP_wrp = nullptr;
-
-    Message("LAMMPS-to-MLIP link has been terminated\n");
-    
-    if (logfilestream.is_open())
-        logfilestream.close();
 }
 

@@ -16,6 +16,8 @@ struct MPI_data
     std::string fnm_ending = "";
     MPI_Comm comm;  // mpi communication group
     void InitComm(MPI_Comm _comm);   // Initialization, updating the object
+
+    void(*LammpsCallbackComm)(void*, double*) = nullptr;
 };
 
 // Common communicator

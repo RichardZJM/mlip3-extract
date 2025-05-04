@@ -254,10 +254,10 @@ void Wrapper::Process(Configuration & cfg)
 
     if (!cfgs_fnm.empty() && (call_count % (skip_saving_N_cfgs+1) == 0))
     {
-        if (cfg.CommGhostData != nullptr)
+        if (mpi.LammpsCallbackComm != nullptr)
         {
             double* comm_arr = (cfg.has_forces() ? &cfg.force(0, 0) : nullptr);
-            cfg.CommGhostData(comm_arr);
+            mpi.LammpsCallbackComm(cfg.p_void_pair, comm_arr);
 
             for (int i=0; i<cfg.size(); i++)
                 if (cfg.ghost_inds.count(i) != 0)

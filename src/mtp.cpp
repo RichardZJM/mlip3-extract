@@ -872,7 +872,7 @@ void MTP::CalcEFSGrads( Configuration& cfg,
     // now this limit is set to comm_reverse=3 (i.e. array size limit is 3*cfg.size())
     // However we need in communication of the array with comm_reverse=3*CoeffCount() (i.e. array size limit is 3*cfg.size()*CoeffCount())
     // It is nessessary to think and study how to _properly_ avoid such inefficient way
-    if (cfg.CommGhostData != nullptr)
+    if (mpi.LammpsCallbackComm != nullptr)
     {
         Array2D tmp((int)cfg.size(), 3);
     
@@ -882,7 +882,7 @@ void MTP::CalcEFSGrads( Configuration& cfg,
                 for (int a=0; a<3; a++)
                     tmp(i, a) = out_frc_cmpnts(i, a, k);
 
-            cfg.CommGhostData((cfg.size()==0) ? nullptr : &tmp(0, 0));
+            mpi.LammpsCallbackComm(cfg.p_void_pair, (cfg.size()==0) ? nullptr : &tmp(0, 0));
 
             for (int i=0; i<cfg.size(); i++)
                 for (int a=0; a<3; a++)
