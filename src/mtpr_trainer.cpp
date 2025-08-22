@@ -993,7 +993,7 @@ void MTPR_trainer::Train(std::vector<Configuration> &training_set)
 
 double MTPR_trainer::FindLoss(std::vector<Configuration> &training_set)
 {
-    CalcObjectiveFunctionGrad(training_set);
+    ObjectiveFunction(training_set);
 #ifdef MLIP_MPI
     MPI_Barrier(mpi.comm);
     MPI_Reduce(&loss_, &bfgs_f, 1, MPI_DOUBLE, MPI_SUM, 0, mpi.comm);
