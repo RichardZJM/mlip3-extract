@@ -1,7 +1,7 @@
 # MLIP
 
-MLIP is a software for Machine Learning Interatomic Potentials.
-It has been developed at Skoltech (Moscow) by
+This is a fork of MLIP-3, a software for Machine Learning Interatomic Potentials.
+The original, MLIP-3, has been developed at Skoltech (Moscow) by
 Alexander Shapeev, Evgeny Podryabinkin, Konstantin Gubaev, and Ivan Novikov
 
 ## Licence
