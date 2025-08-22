@@ -67,3 +67,5 @@ dev_doc/*.out
 dev_doc/*.synctex.gz
 test/serial/examples/10.Relax_train/relaxation.log
 test/mpi/examples/10.Relax_train/relaxation.log_0
+
+test/examples/11.Extract
